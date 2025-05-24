@@ -37,7 +37,7 @@ router.put('/profile', auth, async (req, res) => {
 });
 
 // Get all patients (Healthcare professionals only)
-router.get('/patients', auth, authorize('healthcare_professional'), async (req, res) => {
+router.get('/patients', auth, authorize('doctor'), async (req, res) => {
   try {
     const patients = await User.find({ role: 'patient' }).select('-password');
     res.json(patients);
@@ -51,7 +51,7 @@ router.get('/patients', auth, authorize('healthcare_professional'), async (req, 
 router.get('/healthcare-professionals', auth, async (req, res) => {
   try {
     const professionals = await User.find({ 
-      role: 'healthcare_professional' 
+      role: 'doctor' 
     }).select('-password');
     res.json(professionals);
   } catch (error) {

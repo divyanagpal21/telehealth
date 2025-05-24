@@ -79,9 +79,47 @@ class AuthController {
 
   async logout(req, res) {
     // In a stateless JWT system, logout is handled client-side
-    // You could implement a token blacklist if needed
+    
     res.json({ success: true, message: 'Logged out successfully' });
   }
+  
+async getRole(req, res) {
+  try {
+    const { role } = req.user;
+    
+    if (!role) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role not found for user'
+      });
+    }
+
+    
+    let mappedRole;
+    if (role === 'doctor') {
+      mappedRole = 'doctor';
+    } else if (role === 'patient') {
+      mappedRole = 'patient';
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user role'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      role: mappedRole
+    });
+
+  } catch (error) {
+    console.error('Error in getRole endpoint:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+}
 }
 
 module.exports = new AuthController();

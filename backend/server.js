@@ -3,9 +3,11 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
+const patientRoutes = require('./routes/patient');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+const doctorRoutes = require('./routes/doctor');
 
 const app = express();
 
@@ -14,14 +16,19 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100 // limit each IP to 100 requests per windowMs
 });
+
 // Middleware
 app.use(limiter);
 app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/user', userRoutes);
+app.use('/api/v1/doctor', doctorRoutes);
+app.use('/api/v1/patient', patientRoutes);
+
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
