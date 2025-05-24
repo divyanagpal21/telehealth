@@ -2,14 +2,19 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const { auth } = require('../middleware/auth');
+const authController = require('../controllers/authController');
 
 const router = express.Router();
 
 // Register
 router.post('/register', [
+body('firstName').trim().notEmpty().withMessage('First name is required').isAlpha().withMessage('First name must contain only letters'),
+
+body('lastName').trim().notEmpty().withMessage('Last name is required').isAlpha().withMessage('Last name must contain only letters'),
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 }),
-  body('role').isIn(['patient', 'healthcare_professional']),
+  body('role').isIn(['patient', 'doctor']),
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -29,7 +34,7 @@ router.post('/register', [
     }
 
     // Validate healthcare professional fields
-    if (role === 'healthcare_professional') {
+    if (role === 'doctor') {
       if (!profile.licenseNumber || !profile.specialization) {
         return res.status(400).json({ 
           message: 'License number and specialization are required for healthcare professionals' 
@@ -115,5 +120,6 @@ router.post('/login', [
     res.status(500).json({ message: 'Server error' });
   }
 });
+router.get('/getRole', auth, authController.getRole);
 
 module.exports = router;
