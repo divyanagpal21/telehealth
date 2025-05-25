@@ -15,6 +15,26 @@
 
 ---
 
+## 🌐 Live Demo
+
+Experience the Telehealth Platform in action!
+
+**🚀 [View Live Application](https://your-deployed-link.vercel.app)**
+
+> **Note**: The application is fully functional with real-time video consultations, appointment booking, and secure patient data management.
+
+---
+
+## 🎥 Video Demonstration
+
+Watch a complete walkthrough of the Telehealth Platform features and functionality.
+
+**📹 [Watch Project Demo](https://www.youtube.com/watch?v=your-demo-video-id)**
+
+> **Note**: The video demonstrates patient registration, doctor consultation booking, video calls, and the complete healthcare workflow.
+
+---
+
 ## 📋 Table of Contents
 
 - [✨ Features](#-features)
