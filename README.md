@@ -10,7 +10,7 @@
 
 <div align="center">
   <h3>🌟 A Modern Telehealth Solution for Remote Healthcare</h3>
-  <p>Connecting patients and healthcare providers through secure, real-time video consultations and comprehensive health management tools.</p>
+  <p>Connecting patients and healthcare providers through secure and comprehensive health management tools.</p>
 </div>
 
 ---
@@ -21,7 +21,7 @@ Experience the Telehealth Platform in action!
 
 **🚀 [View Live Application](https://your-deployed-link.vercel.app)**
 
-> **Note**: The application is fully functional with real-time video consultations, appointment booking, and secure patient data management.
+> **Note**: The application is fully functional with appointment booking and secure patient data management.
 
 ---
 
@@ -31,7 +31,7 @@ Watch a complete walkthrough of the Telehealth Platform features and functionali
 
 **📹 [Watch Project Demo](https://www.youtube.com/watch?v=your-demo-video-id)**
 
-> **Note**: The video demonstrates patient registration, doctor consultation booking, video calls, and the complete healthcare workflow.
+> **Note**: The video demonstrates patient registration, doctor consultation booking and the complete healthcare workflow.
 
 ---
 
