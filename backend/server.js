@@ -9,7 +9,7 @@ const patientRoutes = require('./routes/patient');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const doctorRoutes = require('./routes/doctor');
-const paymentRoutes = require('./routes/paymentroutes');
+// const paymentRoutes = require('./routes/paymentroutes');
 const setupDeepgramServer = require('./deepgramSocket');
 const setupSocketServer = require('./socket/chatSocket'); // New import
 
@@ -35,7 +35,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/doctor', doctorRoutes);
 app.use('/api/v1/patient', patientRoutes);
-app.use('/api/payment', paymentRoutes);
+// app.use('/api/payment', paymentRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -49,10 +49,11 @@ mongoose.connect(process.env.MONGODB_URI)
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Setup Socket.IO server
+
 const io = setupSocketServer(server);
 
 // Setup Deepgram WebSocket with Socket.IO integration
-setupDeepgramServer(server, io);
+setupDeepgramServer(io);              // ✅ No longer passes `server`
 
 // Start server
 const PORT = process.env.PORT || 5000;

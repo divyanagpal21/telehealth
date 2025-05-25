@@ -3,29 +3,28 @@ const { Server } = require('socket.io');
 const setupSocketServer = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: "http://localhost:3000", // Your frontend URL
+      origin: "http://localhost:5173", // Change this to match your frontend
       methods: ["GET", "POST"]
     }
   });
 
-  // Store active consultations and participants
+  // Store active consultations and user sessions
   const activeConsultations = new Map();
   const userSockets = new Map();
 
   io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
-    // Join consultation room
-    socket.on('join-consultation', (consultationId, userInfo) => {
-      socket.join(consultationId);
-      
-      // Store user info
-      userSockets.set(socket.id, {
-        consultationId,
-        userInfo
-      });
+    // Handle joining a consultation room
+    socket.on('join-consultation', ({ consultationId, userInfo }) => {
+      if (!consultationId || !userInfo) return;
 
-      // Add to active consultation
+      socket.join(consultationId);
+
+      // Track user session
+      userSockets.set(socket.id, { consultationId, userInfo });
+
+      // Initialize consultation if not existing
       if (!activeConsultations.has(consultationId)) {
         activeConsultations.set(consultationId, {
           participants: [],
@@ -35,84 +34,74 @@ const setupSocketServer = (server) => {
       }
 
       const consultation = activeConsultations.get(consultationId);
-      consultation.participants.push({
-        socketId: socket.id,
-        ...userInfo
-      });
+      consultation.participants.push({ socketId: socket.id, ...userInfo });
 
-      // Notify others in the room
+      // Notify others
       socket.to(consultationId).emit('user-joined', userInfo);
-      
-      // Send existing messages and transcripts to new user
+
+      // Send current state to the user
       socket.emit('consultation-history', {
         messages: consultation.messages,
         transcripts: consultation.transcripts
       });
     });
 
-    // Handle chat messages
+    // Handle incoming chat messages
     socket.on('message', (messageData) => {
       const user = userSockets.get(socket.id);
-      if (user) {
-        const message = {
-          ...messageData,
-          timestamp: new Date().toISOString()
-        };
+      if (!user) return;
 
-        // Store message
-        const consultation = activeConsultations.get(user.consultationId);
-        if (consultation) {
-          consultation.messages.push(message);
-        }
+      const message = {
+        ...messageData,
+        timestamp: new Date().toISOString()
+      };
 
-        // Broadcast to all users in the consultation
+      const consultation = activeConsultations.get(user.consultationId);
+      if (consultation) {
+        consultation.messages.push(message);
         io.to(user.consultationId).emit('message', message);
       }
     });
 
-    // Handle transcript updates
+    // Handle incoming transcript updates
     socket.on('transcript', (transcriptData) => {
       const user = userSockets.get(socket.id);
-      if (user) {
-        const transcript = {
-          ...transcriptData,
-          timestamp: new Date().toISOString(),
-          speaker: user.userInfo.name
-        };
+      if (!user) return;
 
-        // Store transcript
-        const consultation = activeConsultations.get(user.consultationId);
-        if (consultation) {
-          consultation.transcripts.push(transcript);
-        }
+      const transcript = {
+        ...transcriptData,
+        timestamp: new Date().toISOString(),
+        speaker: user.userInfo.name
+      };
 
-        // Broadcast to all users in the consultation
+      const consultation = activeConsultations.get(user.consultationId);
+      if (consultation) {
+        consultation.transcripts.push(transcript);
         socket.to(user.consultationId).emit('transcript-update', transcript);
       }
     });
 
-    // Handle disconnect
+    // Handle user disconnect
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id);
-      
+
       const user = userSockets.get(socket.id);
       if (user) {
-        // Remove from active consultation
-        const consultation = activeConsultations.get(user.consultationId);
+        const { consultationId, userInfo } = user;
+        const consultation = activeConsultations.get(consultationId);
+
         if (consultation) {
-          consultation.participants = consultation.participants.filter(
-            p => p.socketId !== socket.id
-          );
-          
-          // If no participants left, clean up
+          consultation.participants = consultation.participants.filter(p => p.socketId !== socket.id);
+
+          // Clean up empty consultations
           if (consultation.participants.length === 0) {
-            activeConsultations.delete(user.consultationId);
+            activeConsultations.delete(consultationId);
           }
+
+          // Notify others
+          socket.to(consultationId).emit('user-left', userInfo);
         }
 
-        // Notify others in the room
-        socket.to(user.consultationId).emit('user-left', user.userInfo);
-        
         userSockets.delete(socket.id);
       }
     });

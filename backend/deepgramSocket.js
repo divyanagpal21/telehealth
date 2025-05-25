@@ -1,76 +1,50 @@
-const WebSocket = require('ws');
-const { Deepgram } = require('@deepgram/sdk');
+const { createClient } = require('@deepgram/sdk'); // ✅ updated for v3
 require('dotenv').config();
 
-const deepgram = new Deepgram(process.env.DEEPGRAM_API_KEY);
+const deepgram = createClient(process.env.DEEPGRAM_API_KEY); // ✅ v3 syntax
 
-const setupDeepgramServer = (server, io) => { // Add io parameter
-  const wss = new WebSocket.Server({ 
-    server,
-    path: '/deepgram' // Separate path for Deepgram
-  });
+function setupDeepgramServer(io) {
+  io.on('connection', (socket) => {
+    console.log('Client connected for Deepgram transcription');
 
-  wss.on('connection', (ws) => {
-    console.log('Client connected to Deepgram WebSocket');
+    let deepgramLive;
 
-    const deepgramLive = deepgram.transcription.live({
-      punctuate: true,
-      language: 'en',
-      interim_results: true,
-      endpointing: 300
-    });
-
-    deepgramLive.on('open', () => {
-      console.log('Connected to Deepgram real-time transcription');
-    });
-
-    deepgramLive.on('error', (err) => {
-      console.error('Deepgram error:', err);
-      ws.send(JSON.stringify({ error: 'Transcription error' }));
-    });
-
-    deepgramLive.on('transcriptReceived', (transcription) => {
+    socket.on('start-audio', async (message) => {
       try {
-        const transcript = JSON.parse(transcription);
-        const alternatives = transcript.channel?.alternatives;
-        
-        if (alternatives && alternatives.length > 0) {
-          const text = alternatives[0].transcript;
-          if (text && text.trim()) {
-            // Send to WebSocket client
-            ws.send(text);
-            
-            // Also broadcast via Socket.IO if available
-            if (io) {
-              io.emit('live-transcript', {
-                text: text,
-                confidence: alternatives[0].confidence,
-                timestamp: new Date().toISOString()
-              });
+        if (!deepgramLive) {
+          deepgramLive = await deepgram.listen.live({
+            model: 'general',
+            language: 'en-US',
+            interim_results: true
+          });
+
+          deepgramLive.on('transcriptReceived', (data) => {
+            const transcript = JSON.parse(data).channel.alternatives[0].transcript;
+            if (transcript) {
+              socket.emit('transcript', transcript); // Send back to client
             }
-          }
+          });
+
+          deepgramLive.on('error', (err) => {
+            console.error('Deepgram error:', err);
+            socket.disconnect();
+          });
         }
-      } catch (error) {
-        console.error('Error parsing transcript:', error);
+
+        // Send audio buffer to Deepgram
+        deepgramLive.send(message);
+      } catch (err) {
+        console.error('Deepgram setup failed:', err);
       }
     });
 
-    ws.on('message', (msg) => {
-      if (deepgramLive.getReadyState() === 1) {
-        deepgramLive.send(msg);
-      }
-    });
-
-    ws.on('close', () => {
-      deepgramLive.finish();
+    socket.on('disconnect', () => {
       console.log('Client disconnected from Deepgram');
-    });
-
-    ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
-      deepgramLive.finish();
+      if (deepgramLive) {
+        deepgramLive.finish();
+      }
     });
   });
-};
+}
 
 module.exports = setupDeepgramServer;
