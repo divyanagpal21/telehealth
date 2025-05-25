@@ -29,7 +29,7 @@ Experience the Telehealth Platform in action!
 
 Watch a complete walkthrough of the Telehealth Platform features and functionality.
 
-**📹 [Watch Project Demo](https://www.youtube.com/watch?v=your-demo-video-id)**
+**📹 [Watch Project Demo](https://youtu.be/FhmvjU35QDQ)**
 
 > **Note**: The video demonstrates patient registration, doctor consultation booking and the complete healthcare workflow.
 
