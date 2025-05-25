@@ -262,7 +262,7 @@ WEBRTC_CONFIG=your_webrtc_configuration
 Our Telehealth platform follows a comprehensive design system created in Figma, ensuring consistency and excellent user experience across all touchpoints.
 
 #### 📐 Design Files
-- **🎨 [Main Design File](https://www.figma.com/file/your-figma-file-id)** - Complete UI/UX designs
+- **🎨 [Main Design File](https://www.figma.com/design/Cfe8n7T3fWCiIWIuU1YuLR/ui?node-id=3-2&t=iNXnlaAdBn4k74Bu-1)** - Complete UI/UX designs
 
 #### 🎨 Design Highlights
 - **🎯 User-Centered Design** - Focused on healthcare accessibility
