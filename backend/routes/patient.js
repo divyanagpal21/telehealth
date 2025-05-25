@@ -142,7 +142,7 @@ router.post('/book', async (req, res) => {
           email: patientUser.email
         },
         assignedDate: savedRelationship.assignedDate,
-        status: 'active',
+        status: 'inactive',
         notes: savedRelationship.notes
       }
     });
@@ -318,6 +318,83 @@ router.get('/doctors', auth, authorize('patient'), async (req, res) => {
     res.status(500).json({ 
       message: 'Failed to retrieve doctors',
       code: 'FETCH_FAILED'
+    });
+  }
+});
+
+router.patch('/confirm-payment/:appointmentId', async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const { jwt: token } = req.body;
+    
+    if (!token) {
+      return res.status(401).json({ 
+        message: 'JWT token is required',
+        code: 'MISSING_JWT'
+      });
+    }
+
+    // Verify token
+    let patientUser;
+    try {
+      patientUser = await verifyTokenFromBody(token);
+      
+      if (!patientUser || patientUser.role !== 'patient') {
+        return res.status(403).json({ 
+          message: 'Invalid token or user not authorized',
+          code: 'INVALID_USER'
+        });
+      }
+    } catch (tokenError) {
+      return res.status(403).json({ 
+        message: 'Token verification failed',
+        code: 'TOKEN_VERIFICATION_ERROR'
+      });
+    }
+
+    // Find the appointment
+    const appointment = await DoctorPatient.findOne({
+      _id: appointmentId,
+      patientId: patientUser._id
+    });
+
+    if (!appointment) {
+      return res.status(404).json({ 
+        message: 'Appointment not found',
+        code: 'APPOINTMENT_NOT_FOUND'
+      });
+    }
+
+    if (appointment.isPaid) {
+      return res.status(400).json({ 
+        message: 'Payment already confirmed',
+        code: 'ALREADY_PAID'
+      });
+    }
+
+    // Update the appointment status
+    appointment.isPaid = true;
+    appointment.status = 'active';
+    appointment.notes = `${appointment.notes || ''}\n[PAYMENT] Payment confirmed on ${new Date().toISOString()}`;
+
+    await appointment.save();
+
+    res.status(200).json({
+      message: 'Payment confirmed and appointment activated',
+      data: {
+        appointmentId: appointment._id,
+        status: 'active',
+        paidAt: new Date(),
+        doctorId: appointment.doctorId,
+        patientId: appointment.patientId
+      }
+    });
+
+  } catch (error) {
+    console.error('Payment confirmation error:', error);
+    res.status(500).json({ 
+      message: 'Failed to confirm payment',
+      code: 'PAYMENT_CONFIRMATION_FAILED'
     });
   }
 });

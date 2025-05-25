@@ -9,9 +9,9 @@ const patientRoutes = require('./routes/patient');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const doctorRoutes = require('./routes/doctor');
-// const paymentRoutes = require('./routes/paymentroutes');
+// const paymentRouter = require('./routes/payment'); // Fixed import name
 const setupDeepgramServer = require('./deepgramSocket');
-const setupSocketServer = require('./socket/chatSocket'); // New import
+const setupSocketServer = require('./socket/chatSocket');
 
 const app = express();
 const server = http.createServer(app);
@@ -25,7 +25,7 @@ const limiter = rateLimit({
 // Middleware
 app.use(limiter);
 app.use(cors({
-  origin: "http://localhost:3000", // Your frontend URL
+  origin: "http://localhost:5173",
   credentials: true
 }));
 app.use(express.json());
@@ -35,7 +35,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/doctor', doctorRoutes);
 app.use('/api/v1/patient', patientRoutes);
-// app.use('/api/payment', paymentRoutes);
+// app.use('/api/payment', paymentRouter); // Fixed usage here
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -49,11 +49,10 @@ mongoose.connect(process.env.MONGODB_URI)
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Setup Socket.IO server
-
 const io = setupSocketServer(server);
 
-// Setup Deepgram WebSocket with Socket.IO integration
-setupDeepgramServer(io);              // ✅ No longer passes `server`
+// Setup Deepgram WebSocket
+setupDeepgramServer(io);
 
 // Start server
 const PORT = process.env.PORT || 5000;

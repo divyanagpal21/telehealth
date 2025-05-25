@@ -1,33 +1,86 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // ✅ import the auth hook
+import { useAuth } from '../context/AuthContext';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth(); // ✅ get login function from context
-
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (!formData.email || !formData.password) {
-      alert("Please enter both email and password");
+      setSnackbar({
+        open: true,
+        message: 'Please enter both email and password',
+        severity: 'error',
+      });
+      setIsLoading(false);
       return;
     }
 
-    console.log("Logging in with:", formData);
+    try {
+      const response = await fetch('http://localhost:5000/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-    // ✅ Simulate successful login and update auth state
-    login(); // this will update isAuthenticated and store in localStorage
-    navigate('/'); // go to homepage after login
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Store token in localStorage
+      localStorage.setItem('authToken', data.token);
+      
+      // Update auth context with user data
+      login(data.user);
+
+      setSnackbar({
+        open: true,
+        message: 'Login successful! Redirecting...',
+        severity: 'success',
+      });
+
+      // Redirect after a short delay
+      setTimeout(() => navigate('/'), 1500);
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.message || 'Login failed. Please try again.',
+        severity: 'error',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -63,9 +116,12 @@ export default function Login() {
 
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-blue-500 to-teal-400 text-white py-2 rounded hover:from-blue-600 hover:to-teal-500"
+          disabled={isLoading}
+          className={`w-full bg-gradient-to-r from-blue-500 to-teal-400 text-white py-2 rounded hover:from-blue-600 hover:to-teal-500 ${
+            isLoading ? 'opacity-70' : ''
+          }`}
         >
-          Sign In
+          {isLoading ? 'Signing In...' : 'Sign In'}
         </button>
 
         <p className="mt-4 text-center text-sm">
@@ -75,6 +131,21 @@ export default function Login() {
           </a>
         </p>
       </form>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
