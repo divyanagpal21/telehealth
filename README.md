@@ -19,7 +19,7 @@
 
 Experience the Telehealth Platform in action!
 
-**🚀 [View Live Application](https://your-deployed-link.vercel.app)**
+**🚀 [View Live Application](https://7fac-103-80-23-36.ngrok-free.app/)**
 
 > **Note**: The application is fully functional with appointment booking and secure patient data management.
 
